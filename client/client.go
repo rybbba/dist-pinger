@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	pb "example/dist-pinger/pinger"
+	pb "github.com/rybbba/dist-pinger/pinger"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

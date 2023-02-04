@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/http"
 
-	pb "example/dist-pinger/pinger"
+	pb "github.com/rybbba/dist-pinger/pinger"
 
 	"google.golang.org/grpc"
 )

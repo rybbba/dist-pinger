@@ -1,4 +1,4 @@
-module example/dist-pinger
+module github.com/rybbba/dist-pinger
 
 go 1.19
 
