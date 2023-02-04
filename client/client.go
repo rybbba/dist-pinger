@@ -18,7 +18,7 @@ var (
 )
 
 func init() {
-	rand.Seed(time.Now().Unix()) // TODO: this way of seeding random is probably unsecure
+	rand.Seed(time.Now().Unix()) // TODO: this way of seeding random is probably insecure
 }
 
 func main() {
