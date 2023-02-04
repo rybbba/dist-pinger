@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "example/dist-pinger/pinger";
+
+message CheckHostRequest {
+    string host = 1;
+}
+
+message CheckHostResponse {
+    int32 code = 1;
+}
+
+service Pinger {
+    rpc CheckHost(CheckHostRequest) returns (CheckHostResponse);
+}
