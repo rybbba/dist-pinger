@@ -16,4 +16,4 @@ services:
     build:
       context: .
       dockerfile: Dockerfile_client
-    command: ya.ru server1:50051 server2:50051 server3:50051 server4:50051  # servers might not start yet
+    command: server1:50051 server2:50051 server3:50051 server4:50051  # servers might not start yet
