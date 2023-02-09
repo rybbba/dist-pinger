@@ -33,7 +33,7 @@ type server struct {
 func (s *server) CheckHost(ctx context.Context, in *pb.CheckHostRequest) (*pb.CheckHostResponse, error) {
 	res, err := check(in.GetHost())
 	if err != nil {
-		return &pb.CheckHostResponse{Code: -1}, err
+		return &pb.CheckHostResponse{Code: -1}, err // TODO: probably should not return all server-side errors to client
 	}
 	return &pb.CheckHostResponse{Code: int32(res)}, nil
 }
