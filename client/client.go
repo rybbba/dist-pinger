@@ -14,6 +14,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+type Node struct {
+	addr string
+}
+
 var (
 	host = flag.String("host", "example.com", "Host to check")
 )
@@ -33,7 +37,10 @@ const pickCount = 3
 
 func main() {
 	flag.Parse()
-	nodes := flag.Args()
+	nodes := make([]Node, len(flag.Args()))
+	for i := 0; i < len(flag.Args()); i++ {
+		nodes[i] = Node{addr: flag.Args()[i]}
+	}
 	log.Print(nodes)
 
 	using, err := pickN(len(nodes), pickCount)
@@ -42,10 +49,10 @@ func main() {
 	}
 	var results [pickCount]int32
 	for i, nodeInd := range using {
-		addr := nodes[nodeInd]
-		log.Printf("Using node: %s", addr)
+		node := nodes[nodeInd]
+		log.Printf("Using node: %v", node)
 
-		conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(node.addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("did not connect: %v", err)
 		}
