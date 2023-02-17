@@ -19,7 +19,8 @@ type Node struct {
 }
 
 var (
-	host = flag.String("host", "example.com", "Host to check")
+	host     = flag.String("host", "example.com", "Host to check")
+	nodeFile = flag.String("file", "nodes.json", "Path to ")
 )
 
 func pickN(total int, n int) ([]int, error) {
@@ -37,9 +38,10 @@ const pickCount = 3
 
 func main() {
 	flag.Parse()
-	nodes := make([]Node, len(flag.Args()))
-	for i := 0; i < len(flag.Args()); i++ {
-		nodes[i] = Node{addr: flag.Args()[i]}
+	addrs := flag.Args()
+	nodes := make(map[string]Node)
+	for _, addr := range addrs {
+		nodes[addr] = Node{addr: addr}
 	}
 	log.Print(nodes)
 
@@ -49,7 +51,7 @@ func main() {
 	}
 	var results [pickCount]int32
 	for i, nodeInd := range using {
-		node := nodes[nodeInd]
+		node := nodes[addrs[nodeInd]]
 		log.Printf("Using node: %v", node)
 
 		conn, err := grpc.Dial(node.addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
