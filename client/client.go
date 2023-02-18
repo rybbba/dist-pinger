@@ -50,6 +50,8 @@ func main() {
 		log.Fatalf("error while picking nodes: %v", err)
 	}
 	var results [pickCount]int32
+	aggResults := make(map[int32]int)
+	var bestAns int32 = 0
 	for i, nodeInd := range using {
 		node := nodes[addrs[nodeInd]]
 		log.Printf("Using node: %v", node)
@@ -64,13 +66,21 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		r, err := c.CheckHost(ctx, &pb.CheckHostRequest{Host: *host})
+		var code int32
 		if err != nil {
-			results[i] = 0
+			code = 0
 		} else {
-			results[i] = r.GetCode()
+			code = r.GetCode()
 		}
-
+		aggResults[code] += 1
+		if aggResults[code] > aggResults[bestAns] {
+			results[i] = code
+			bestAns = code
+		}
 	}
 
 	log.Printf("Check result for host %s: %v", *host, results)
+	log.Printf("Aggregated results: %v", aggResults)
+	log.Printf("Resource status: %d", bestAns)
+	// TODO: How to deal with multiple "right" answers (geo-specific access restriction, etc.)?
 }
