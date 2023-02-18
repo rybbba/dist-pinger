@@ -73,8 +73,8 @@ func main() {
 			code = r.GetCode()
 		}
 		aggResults[code] += 1
+		results[i] = code
 		if aggResults[code] > aggResults[bestAns] {
-			results[i] = code
 			bestAns = code
 		}
 	}
