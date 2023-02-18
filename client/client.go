@@ -43,7 +43,7 @@ func main() {
 	for _, addr := range addrs {
 		nodes[addr] = Node{addr: addr}
 	}
-	log.Print(nodes)
+	log.Print(addrs)
 
 	using, err := pickN(len(nodes), pickCount)
 	if err != nil {
