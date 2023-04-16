@@ -1,10 +1,9 @@
-package main
+package server
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	"log"
+	"log" // TODO: remove log from server code
 	"net"
 	"net/http"
 
@@ -22,10 +21,6 @@ func check(host string) (int, error) {
 	return resp.StatusCode, nil
 }
 
-var (
-	port = flag.Int("port", 50051, "The server port")
-)
-
 type server struct {
 	pb.UnimplementedPingerServer
 }
@@ -38,9 +33,10 @@ func (s *server) CheckHost(ctx context.Context, in *pb.CheckHostRequest) (*pb.Ch
 	return &pb.CheckHostResponse{Code: int32(res)}, nil
 }
 
-func main() {
-	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+type PingerServer struct{}
+
+func (pingerServer *PingerServer) Serve(port int) {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -48,7 +44,7 @@ func main() {
 	s := grpc.NewServer()
 	pb.RegisterPingerServer(s, &server{})
 
-	log.Printf("server listening at %v", lis.Addr())
+	log.Printf("Server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
