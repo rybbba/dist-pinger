@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"time"
 
-	pb "github.com/rybbba/dist-pinger/pinger"
+	pb "github.com/rybbba/dist-pinger/grpc"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

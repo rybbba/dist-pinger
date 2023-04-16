@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/rybbba/dist-pinger/pinger";
+option go_package = "github.com/rybbba/dist-pinger/grpc";
 
 message CheckHostRequest {
     string host = 1;
