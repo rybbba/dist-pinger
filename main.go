@@ -7,6 +7,7 @@ import (
 
 	"github.com/rybbba/dist-pinger/client"
 	"github.com/rybbba/dist-pinger/server"
+	. "github.com/rybbba/dist-pinger/structs"
 )
 
 var (
@@ -25,8 +26,12 @@ func main() {
 	go pingerServer.Serve(*port)
 
 	addrs := flag.Args() // list of nodes addresses
+	nodes := make([]Node, len(addrs))
+	for i, addr := range addrs {
+		nodes[i] = Node{Address: addr}
+	}
 	pingerClient := client.PingerClient{PickCount: 3}
-	pingerClient.SetNodes(addrs)
+	pingerClient.SetNodes(nodes)
 	for {
 		var host string
 		n, err := fmt.Scanln(&host)
