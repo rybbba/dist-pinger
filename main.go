@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/rybbba/dist-pinger/client"
+	"github.com/rybbba/dist-pinger/reputation"
 	"github.com/rybbba/dist-pinger/server"
 )
 
@@ -20,12 +21,15 @@ var (
 func main() {
 	log.Printf("Running dist-pinger")
 	flag.Parse()
+	addrs := flag.Args() // list of nodes addresses
 
-	pingerServer := server.PingerServer{}
+	reputationManager := reputation.ReputationManager{}
+	reputationManager.InitZeros(addrs)
+
+	pingerServer := server.PingerServer{RepManager: &reputationManager}
 	go pingerServer.Serve(*port)
 
-	addrs := flag.Args() // list of nodes addresses
-	pingerClient := client.PingerClient{PickCount: 3}
+	pingerClient := client.PingerClient{RepManager: &reputationManager, PickCount: 3}
 	pingerClient.SetNodes(addrs)
 	for {
 		var host string

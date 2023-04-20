@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	pb "github.com/rybbba/dist-pinger/grpc"
+	"github.com/rybbba/dist-pinger/reputation"
 
 	"google.golang.org/grpc"
 )
@@ -33,7 +34,9 @@ func (s *server) CheckHost(ctx context.Context, in *pb.CheckHostRequest) (*pb.Ch
 	return &pb.CheckHostResponse{Code: int32(res)}, nil
 }
 
-type PingerServer struct{}
+type PingerServer struct {
+	RepManager *reputation.ReputationManager
+}
 
 func (pingerServer *PingerServer) Serve(port int) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))

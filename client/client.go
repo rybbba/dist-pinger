@@ -8,6 +8,7 @@ import (
 	"time"
 
 	pb "github.com/rybbba/dist-pinger/grpc"
+	"github.com/rybbba/dist-pinger/reputation"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -25,9 +26,10 @@ func pickN(total int, n int) ([]int, error) {
 }
 
 type PingerClient struct {
-	PickCount int
-	addrs     []string
-	nodes     map[string]Node
+	RepManager *reputation.ReputationManager
+	PickCount  int
+	addrs      []string
+	nodes      map[string]Node
 }
 
 func (pingerClient *PingerClient) SetNodes(addrs []string) {
