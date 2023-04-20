@@ -8,11 +8,14 @@ import (
 	"time"
 
 	pb "github.com/rybbba/dist-pinger/grpc"
-	. "github.com/rybbba/dist-pinger/structs"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+type Node struct {
+	address string
+}
 
 func pickN(total int, n int) ([]int, error) {
 	if total < n {
@@ -27,13 +30,11 @@ type PingerClient struct {
 	nodes     map[string]Node
 }
 
-func (pingerClient *PingerClient) SetNodes(nodes []Node) {
-	pingerClient.addrs = make([]string, len(nodes))
+func (pingerClient *PingerClient) SetNodes(addrs []string) {
+	pingerClient.addrs = addrs
 	pingerClient.nodes = make(map[string]Node)
-	for i, node := range nodes {
-		addr := node.Address
-		pingerClient.addrs[i] = addr
-		pingerClient.nodes[addr] = node
+	for _, addr := range addrs {
+		pingerClient.nodes[addr] = Node{address: addr}
 	}
 }
 
@@ -49,7 +50,7 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 		node := pingerClient.nodes[pingerClient.addrs[nodeInd]]
 		log.Printf("Using node: %v", node)
 
-		conn, err := grpc.Dial(node.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(node.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("did not connect: %v", err)
 		}
