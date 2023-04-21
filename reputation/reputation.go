@@ -22,7 +22,7 @@ func (rm *ReputationManager) Init(addrs []string, rates []int) {
 func (rm *ReputationManager) InitZeros(addrs []string) {
 	rm.nodes = make(map[string]Node)
 	for _, addr := range addrs {
-		rm.nodes[addr] = Node{address: addr, reputation: 1}
+		rm.nodes[addr] = Node{address: addr, reputation: 0}
 	}
 }
 
