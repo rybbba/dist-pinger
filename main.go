@@ -12,6 +12,7 @@ import (
 
 var (
 	// client variables
+	id = flag.String("id", "", "The external id that must be the same as the external server address of this node") // TODO: remove and replace with cryptography
 	//nodeFile = flag.String("file", "nodes.json", "Path to file with nodes information")
 
 	// server variables
@@ -31,6 +32,7 @@ func main() {
 
 	pingerClient := client.PingerClient{RepManager: &reputationManager, PickCount: 3}
 	pingerClient.SetNodes(addrs)
+	pingerClient.SetId(*id)
 	for {
 		var host string
 		n, err := fmt.Scanln(&host)

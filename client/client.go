@@ -28,8 +28,13 @@ func pickN(total int, n int) ([]int, error) {
 type PingerClient struct {
 	RepManager *reputation.ReputationManager
 	PickCount  int
+	id         string
 	addrs      []string
 	nodes      map[string]Node
+}
+
+func (pingerClient *PingerClient) SetId(id string) {
+	pingerClient.id = id
 }
 
 func (pingerClient *PingerClient) SetNodes(addrs []string) {
@@ -61,9 +66,10 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		r, err := c.CheckHost(ctx, &pb.CheckHostRequest{Host: host})
+		r, err := c.CheckHost(ctx, &pb.CheckHostRequest{Host: host, Sender: pingerClient.id}) // TODO: The whole id thing is a big crutch right now that should be removed
 		var code int32
 		if err != nil {
+			log.Printf("error during probe request: %v", err)
 			code = 0
 		} else {
 			code = r.GetCode()
@@ -72,6 +78,12 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 		results[i] = code
 		if aggResults[code] > aggResults[bestAns] {
 			bestAns = code
+		}
+	}
+
+	for i, nodeInd := range using {
+		if results[i] == bestAns {
+			pingerClient.RepManager.IncreaseServer(pingerClient.addrs[nodeInd])
 		}
 	}
 
