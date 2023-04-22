@@ -54,7 +54,8 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 	aggResults := make(map[int32]int)
 	var bestAns int32 = 0
 	for i, nodeInd := range using {
-		node := pingerClient.nodes[pingerClient.addrs[nodeInd]]
+		addr := pingerClient.addrs[nodeInd]
+		node := pingerClient.nodes[addr]
 		log.Printf("Using node: %v", node)
 
 		conn, err := grpc.Dial(node.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -74,7 +75,7 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 		} else {
 			code = r.GetCode()
 		}
-		aggResults[code] += 1
+		aggResults[code] += 1 + pingerClient.RepManager.GetReputation(addr) // count every answer with weigth 1 + (server reputation)
 		results[i] = code
 		if aggResults[code] > aggResults[bestAns] {
 			bestAns = code
