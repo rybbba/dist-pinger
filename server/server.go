@@ -15,6 +15,8 @@ import (
 )
 
 func check(host string) (int, error) {
+	// TODO: add host string verification
+
 	resp, err := http.Get(fmt.Sprintf("http://%s", host))
 	if err != nil {
 		return -1, err
