@@ -30,7 +30,7 @@ func main() {
 	pingerServer := server.PingerServer{RepManager: &reputationManager}
 	go pingerServer.Serve(*port)
 
-	pingerClient := client.PingerClient{RepManager: &reputationManager, PickCount: 3}
+	pingerClient := client.PingerClient{RepManager: &reputationManager}
 	pingerClient.SetNodes(addrs)
 	pingerClient.SetId(*id)
 	for {

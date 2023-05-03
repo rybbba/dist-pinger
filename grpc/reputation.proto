@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "github.com/rybbba/dist-pinger/grpc";
+
+message GetProbesRequest {
+    string sender = 1;
+}
+
+message Probe {
+    string address = 1;
+    int32 reputationGood = 2;
+    int32 reputationBad = 3;
+}
+
+message GetProbesResponse {
+    // string sender = 1;
+    repeated Probe probes = 2;
+}
+
+service Reputation {
+    rpc GetProbes(GetProbesRequest) returns (GetProbesResponse);
+}
