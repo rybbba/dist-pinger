@@ -121,21 +121,21 @@ func (rm *ReputationManager) GetProbes(sender string) []Probe {
 	rm.mutex.RUnlock()
 
 	cntRec := []int{pickRecommenders, pickRecommendersQuarantine} // for reliable and quarantined random picks
-	for i := 0; i < len(cntRec); i++ {
-		if len(recommenders[i]) < cntRec[i] {
-			cntRec[i] = len(recommenders[i])
-		}
-	}
 
 	probesMap := make(map[string]Probe)
 
-	for i := 0; i < len(cntRec); i++ {
-		for _, ind := range pickN(len(recommenders[i]), cntRec[i]) {
-			recommender := recommenders[i][ind]
+	for recType := 0; recType < len(cntRec); recType++ {
+		indPerm := rand.Perm(len(recommenders[recType]))
+		for pos := 0; pos < cntRec[recType] && pos < len(recommenders[recType]); pos++ {
+			ind := indPerm[pos]
+			recommender := recommenders[recType][ind]
 			conn, err := grpc.Dial(recommender.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
-				log.Printf("did not connect: %v", err)
-				continue // TODO: For now we will ignore if recommender is unreachable, this behaviour should be changed
+				log.Printf("did not connect to %s: %v", recommender.address, err)
+				// if the request to a credible recommender fails we want to find another one to not lose the voting process quality
+				if recType == 0 {
+					cntRec[recType] += 1
+				}
 			}
 			defer conn.Close()
 			c := pb.NewReputationClient(conn)
@@ -145,9 +145,11 @@ func (rm *ReputationManager) GetProbes(sender string) []Probe {
 
 			r, err := c.GetProbes(ctx, &pb.GetProbesRequest{Sender: sender})
 			if err != nil {
-				log.Printf("error during recommender request: %v", err)
-				log.Print(recommender)
-				continue // TODO: this should be replaced
+				log.Printf("error during recommender request to %s: %v", recommender.address, err)
+				// if the request to a credible recommender fails we want to find another one to not lose the voting process quality
+				if recType == 0 {
+					cntRec[recType] += 1
+				}
 			}
 
 			for _, probeMsg := range r.GetProbes() {
@@ -161,14 +163,14 @@ func (rm *ReputationManager) GetProbes(sender string) []Probe {
 					node.recommenders = make([]probeRecommender, 0)
 				}
 				if IsReputable(probe) { // reputable (for recommender) probe
-					if i == 0 { // credible recommender
+					if recType == 0 { // credible recommender
 						node.Reputable = true // we trust recommender
 						node.recommenders = append(node.recommenders, probeRecommender{address: recommender.address, quarantinedProbe: false})
 					} else { // quarantined recommender
 						node.recommenders = append(node.recommenders, probeRecommender{address: recommender.address, quarantinedProbe: false})
 					}
 				} else { // quarantined (for recommender) probe
-					if i == 0 { // credible recommender
+					if recType == 0 { // credible recommender
 						node.recommenders = append(node.recommenders, probeRecommender{address: recommender.address, quarantinedProbe: true})
 					}
 					// we don't need quarantined probes from quarantined recommenders
@@ -177,10 +179,6 @@ func (rm *ReputationManager) GetProbes(sender string) []Probe {
 			}
 		}
 	}
-	// Now there could be duplicates within one probe slice or even between probes and probesQuarantine
-	// We will deduplicate them leaving probes only outside quarantine if present in both slices
-
-	// TODO: at the moment we are removing duplicates and at the same time removing recommenders of these duplicates, that's not how it should work
 	probes := make([]Probe, 0)
 	probesQuarantine := make([]Probe, 0)
 
@@ -229,7 +227,7 @@ func (rm *ReputationManager) EvaluateVotes(probes []Probe, satisfaction []int) {
 			rm.mutex.Lock()
 			rm.Nodes[probe.Address] = RaiseReputation(getDefault(rm.Nodes, probe.Address))
 			for _, recommender := range probe.recommenders {
-				if !recommender.quarantinedProbe { // if a good probe was also reputable in recommender's point of view then he probably is credible
+				if !recommender.quarantinedProbe { // if a good probe was also reputable in recommender's point of view then it probably is credible
 					rm.Nodes[recommender.address] = RaiseCredibility(getDefault(rm.Nodes, recommender.address))
 				}
 			}
@@ -238,7 +236,7 @@ func (rm *ReputationManager) EvaluateVotes(probes []Probe, satisfaction []int) {
 			rm.mutex.Lock()
 			rm.Nodes[probe.Address] = LowerReputation(getDefault(rm.Nodes, probe.Address))
 			for _, recommender := range probe.recommenders {
-				if !recommender.quarantinedProbe { // // if a bad probe was reputable in recommender's point of view then he probably is not credible
+				if !recommender.quarantinedProbe { // // if a bad probe was reputable in recommender's point of view then it probably is not credible
 					rm.Nodes[recommender.address] = LowerCredibility(getDefault(rm.Nodes, recommender.address))
 				}
 			}
