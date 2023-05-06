@@ -2,7 +2,7 @@ package client
 
 import (
 	"context"
-	"log" // TODO: remove log from client code
+	"log"
 	"time"
 
 	pb "github.com/rybbba/dist-pinger/grpc"
@@ -10,6 +10,10 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+)
+
+var (
+	pickProbes = 3
 )
 
 type Node struct {
@@ -36,14 +40,15 @@ func (pingerClient *PingerClient) SetNodes(addrs []string) {
 }
 
 func (pingerClient *PingerClient) GetStatus(host string) {
-	probesB := pingerClient.RepManager.GetProbes(pingerClient.id) // reputable and quarantined probes
+	// TODO: At this moment we get exactly pickProbes probes and if some of them don't answer we have fewer probes to vote
+	probes := pingerClient.RepManager.GetProbes(pingerClient.id, pickProbes) // reputable and quarantined probes
 
-	results := make([]int32, 0, len(probesB))
+	results := make([]int32, 0, len(probes))
 	resultsToPrint := make([]int32, 0)
 	aggResults := make(map[int32]int)
 
 	var bestAns int32 = 0
-	for _, probe := range probesB {
+	for _, probe := range probes {
 		if probe.Reputable {
 			log.Printf("Using probe: %v", probe.Address)
 		} else {
@@ -88,9 +93,9 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 		}
 	}
 
-	pingerClient.RepManager.EvaluateVotes(probesB, satisfied) // append ruins probes[0]
+	pingerClient.RepManager.EvaluateVotes(probes, satisfied) // append ruins probes[0]
 
-	for _, probe := range probesB {
+	for _, probe := range probes {
 		log.Print(pingerClient.RepManager.Nodes[probe.Address])
 	}
 

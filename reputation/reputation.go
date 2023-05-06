@@ -14,7 +14,6 @@ import (
 )
 
 var (
-	pickProbes       = 3
 	pickRecommenders = 2
 
 	// what rating formula will we use?
@@ -107,7 +106,7 @@ type Probe struct {
 }
 
 // Are we sure that we want reputation manager to pick nodes for us? Maybe this should be moved to the client?
-func (rm *ReputationManager) GetProbes(sender string) []Probe {
+func (rm *ReputationManager) GetProbes(sender string, pickProbes int) []Probe {
 	rm.mutex.RLock()
 	recommenders := [][]Node{make([]Node, 0), make([]Node, 0)} // reliable and quarantined
 
