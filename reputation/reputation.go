@@ -130,7 +130,7 @@ func (rm *ReputationManager) GetProbes(sender string) []Probe {
 	probesMap := make(map[string]Probe)
 
 	for i := 0; i < len(cntRec); i++ {
-		for _, ind := range pickN(len(recommenders), cntRec[i]) {
+		for _, ind := range pickN(len(recommenders[i]), cntRec[i]) {
 			recommender := recommenders[i][ind]
 			conn, err := grpc.Dial(recommender.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
