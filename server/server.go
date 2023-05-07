@@ -30,10 +30,11 @@ type PingerServer struct {
 	pb.UnimplementedReputationServer
 }
 
-func (s *PingerServer) GetProbes(ctx context.Context, in *pb.GetProbesRequest) (*pb.GetProbesResponse, error) {
-	//sender := in.GetSender()
+func (s *PingerServer) GetReputations(ctx context.Context, in *pb.GetReputationsRequest) (*pb.GetReputationsResponse, error) {
+	sender := in.GetSender()
+	needCredibilities := in.GetNeedCredibilities()
 
-	return s.RepManager.GiveProbes(), nil
+	return s.RepManager.GiveProbes(sender, needCredibilities), nil
 }
 
 func (s *PingerServer) CheckHost(ctx context.Context, in *pb.CheckHostRequest) (*pb.CheckHostResponse, error) {

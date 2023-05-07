@@ -11,11 +11,12 @@ import (
 )
 
 var (
-	// client variables
-	id = flag.String("id", "", "The external id that must be the same as the external server address of this node") // TODO: remove and replace with cryptography
+	// TODO: replace id with cryptography
+	id = flag.String("id", "", "The external id that must be the same as the external server address of this node")
 	//nodeFile = flag.String("file", "nodes.json", "Path to file with nodes information")
 
-	// server variables
+	referer = flag.String("ref", "", "Node address to copy initializing ratings from")
+
 	port = flag.Int("port", 50051, "The server port")
 )
 
@@ -25,13 +26,18 @@ func main() {
 	addrs := flag.Args() // list of nodes addresses
 
 	reputationManager := reputation.ReputationManager{}
-	reputationManager.InitZeros(addrs)
+	reputationManager.InitNodes(addrs)
+	if *referer != "" {
+		err := reputationManager.CopyReputation(*id, *referer)
+		if err != nil {
+			log.Fatalf("error while copying reputations: %v", err)
+		}
+	}
 
 	pingerServer := server.PingerServer{RepManager: &reputationManager}
 	go pingerServer.Serve(*port)
 
 	pingerClient := client.PingerClient{RepManager: &reputationManager}
-	pingerClient.SetNodes(addrs)
 	pingerClient.SetId(*id)
 	for {
 		var host string

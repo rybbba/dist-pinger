@@ -33,7 +33,14 @@ type Node struct {
 }
 
 func nodeInit(address string) Node {
-	return Node{address: address, reputationGood: 5, credibilityGood: 5} // all other fields will be zero by default
+	return Node{address: address} // all other fields will be zero by default
+}
+
+func nodeInitRef(address string) Node {
+	node := nodeInit(address)
+	node.reputationGood = 5
+	node.credibilityGood = 5
+	return node
 }
 
 func IsReputable(node Node) bool {
@@ -70,10 +77,10 @@ type ReputationManager struct {
 	mutex sync.RWMutex
 }
 
-func (rm *ReputationManager) InitZeros(addrs []string) {
+func (rm *ReputationManager) InitNodes(addrs []string) {
 	rm.Nodes = make(map[string]Node)
 	for _, addr := range addrs {
-		rm.Nodes[addr] = nodeInit(addr)
+		rm.Nodes[addr] = nodeInitRef(addr)
 	}
 }
 
@@ -85,12 +92,52 @@ func pickN(total int, n int) []int {
 // with an address that is not in the manager's nodes keys
 
 // TODO: I 100% must refactor this
-func (rm *ReputationManager) GiveProbes() *pb.GetProbesResponse {
-	message := &pb.GetProbesResponse{Probes: make([]*pb.Probe, 0)}
+func (rm *ReputationManager) GiveProbes(sender string, withCreds bool) *pb.GetReputationsResponse {
+	message := &pb.GetReputationsResponse{Probes: make([]*pb.Probe, 0)}
 	for _, node := range rm.Nodes {
-		message.Probes = append(message.Probes, &pb.Probe{Address: node.address, ReputationGood: int32(node.reputationGood), ReputationBad: int32(node.reputationBad)})
+		probeMsg := pb.Probe{Address: node.address, ReputationGood: int32(node.reputationGood), ReputationBad: int32(node.reputationBad)}
+		if withCreds {
+			probeMsg.CredibilityGood = int32(node.credibilityGood)
+			probeMsg.CredibilityBad = int32(node.credibilityBad)
+		}
+		message.Probes = append(message.Probes, &probeMsg)
+	}
+	if _, ok := rm.Nodes[sender]; !ok {
+		rm.Nodes[sender] = nodeInit(sender)
 	}
 	return message
+}
+
+func (rm *ReputationManager) CopyReputation(sender string, target string) error {
+	conn, err := grpc.Dial(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	c := pb.NewReputationClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	r, err := c.GetReputations(ctx, &pb.GetReputationsRequest{Sender: sender, NeedCredibilities: true})
+	if err != nil {
+		return err
+	}
+
+	for _, probeMsg := range r.GetProbes() {
+		if probeMsg.Address == sender {
+			continue
+		}
+		node := nodeInit(probeMsg.Address)
+		node.reputationGood, node.reputationBad = int(probeMsg.ReputationGood), int(probeMsg.ReputationBad)
+		node.credibilityGood, node.credibilityBad = int(probeMsg.CredibilityGood), int(probeMsg.CredibilityBad)
+		rm.mutex.Lock()
+		rm.Nodes[probeMsg.Address] = node
+		rm.mutex.Unlock()
+	}
+	rm.Nodes[target] = nodeInitRef(target)
+	log.Printf("Copied reputations: %v", rm.Nodes)
+	return nil
 }
 
 type probeRecommender struct {
@@ -142,7 +189,7 @@ func (rm *ReputationManager) GetProbes(sender string, pickProbes int) []Probe {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 
-			r, err := c.GetProbes(ctx, &pb.GetProbesRequest{Sender: sender})
+			r, err := c.GetReputations(ctx, &pb.GetReputationsRequest{Sender: sender})
 			if err != nil {
 				log.Printf("error during recommender request to %s: %v", recommender.address, err)
 				// if the request to a credible recommender fails we want to find another one to not lose the voting process quality
@@ -204,7 +251,7 @@ func (rm *ReputationManager) GetProbes(sender string, pickProbes int) []Probe {
 		res = append(res, probes[i])
 	}
 	for _, i := range pickN(len(probesQuarantine), cntProbesQ) {
-		res = append(res, probes[i])
+		res = append(res, probesQuarantine[i])
 	}
 
 	return res

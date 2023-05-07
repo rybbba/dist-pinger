@@ -23,20 +23,10 @@ type Node struct {
 type PingerClient struct {
 	RepManager *reputation.ReputationManager
 	id         string
-	addrs      []string
-	nodes      map[string]Node
 }
 
 func (pingerClient *PingerClient) SetId(id string) {
 	pingerClient.id = id
-}
-
-func (pingerClient *PingerClient) SetNodes(addrs []string) {
-	pingerClient.addrs = addrs
-	pingerClient.nodes = make(map[string]Node)
-	for _, addr := range addrs {
-		pingerClient.nodes[addr] = Node{address: addr}
-	}
 }
 
 func (pingerClient *PingerClient) GetStatus(host string) {
