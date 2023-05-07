@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/rybbba/dist-pinger/client"
@@ -43,6 +44,9 @@ func main() {
 		var host string
 		n, err := fmt.Scanln(&host)
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			log.Printf("Bad input: %v", err)
 			continue
 		}
