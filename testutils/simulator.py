@@ -138,17 +138,21 @@ class NetworkSimulator:
                     if not rec[1]: # bad probe was rated high by recommender
                         node.ratings[rec[0]][3] += 1
 
-    def print_reputations(self):
+    def print_reputations(self, cols=None):
+        if cols == None:
+            cols = range(len(self.nodes))
+
         reps = [0]*len(self.nodes)
         for i in range(len(self.nodes)):
             reps[i] = [None]*len(self.nodes)
             for node in self.nodes[i].ratings:
-                reps[i][node] = self.nodes[i].ratings[node]
+                rating = self.nodes[i].ratings[node]
+                reps[i][node] = [rating[0]-rating[1], rating[2]-rating[3]]
         
         pretty_reps = PrettyTable()
-        pretty_reps.field_names = ["ind"] + list(range(len(self.nodes)))
+        pretty_reps.field_names = ["ind"] + list(cols)
         for i in range(len(self.nodes)):
-            pretty_reps.add_row([i] + reps[i])
+            pretty_reps.add_row([i] + [reps[i][j] for j in cols])
         
         print(pretty_reps)
     
@@ -175,7 +179,7 @@ class NetworkSimulator:
         print("-------------------")
 
 
-if __name__ == "__main__":
+def tc1():
     s = NetworkSimulator(5)
     for ref in range(5):
         for i in range(4):
@@ -189,3 +193,51 @@ if __name__ == "__main__":
     
     s.print_stats()
         
+def tc2():
+    ref_cnt = 10
+    evil_cnt = 2
+
+    s = NetworkSimulator(ref_cnt)
+
+    s.add_evil_cluster(evil_cnt)
+
+    s.print_stats()
+
+    for step in range(500):
+        for node in range(len(s.nodes)):
+            s.ping(node)
+    
+    s.print_reputations()
+
+    s.reset_stats()
+    for step in range(500):
+        for node in range(ref_cnt):
+            s.ping(node)
+    s.print_stats()
+
+
+def tc3():
+    s = NetworkSimulator(10)
+
+    for step in range(100):
+        for node in range(len(s.nodes)):
+            s.ping(node)
+    
+    s.print_stats()
+
+    s.nodes[4].probe_miss_rate = 1
+    s.nodes[5].probe_miss_rate = 1
+
+    for step in range(1000):
+        if step % 10 == 0:
+            s.print_stats()
+        for node in range(len(s.nodes)):
+            s.ping(node)
+    
+    s.print_reputations(cols=[4, 5])
+    s.print_stats()
+
+    
+
+if __name__ == "__main__":
+    tc3()
