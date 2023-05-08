@@ -39,7 +39,15 @@ class NetworkSimulator:
             self.nodes[ref_node].ratings.setdefault(ind, [0, 0, 0, 0])
         self.nodes.append(node)
     
-    def ping(self, node_ind):
+    # Recommends everyone including themselves, always answers wrong
+    def add_evil_cluster(self, n):
+        ratings = {}
+        for i in range(len(self.nodes)+n):
+            ratings[i] = [100000, 0, 0, 100000]
+        for _ in range(n):
+            self.add_node(ratings, probe_miss_rate=1)
+    
+    def ping(self, node_ind, verbose=False):
         node = self.nodes[node_ind]
 
         recommenders = []
@@ -104,6 +112,18 @@ class NetworkSimulator:
         best_ans = good_answers > bad_answers
         if best_ans:
             self.good_results += 1
+
+        if verbose:
+            probe_str = ""
+            for i in range(r_cnt):
+                probe = picked_probes[i]
+                probe_str += f'{probe}({"T" if answers[probe] else "F"}) '
+            q_probe_str = ""
+            for i in range(r_cnt, r_cnt+q_cnt):
+                probe = picked_probes[i]
+                q_probe_str += f'{probe}({"T" if answers[probe] else "F"}) '
+            ping_str = f'{node_ind} -> ({"T" if best_ans else "F"}): [ {probe_str}] {q_probe_str}'
+            print(ping_str)
 
         for probe in picked_probes:
             node.ratings.setdefault(probe, [0, 0, 0, 0]),
