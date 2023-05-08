@@ -201,19 +201,20 @@ def tc2():
 
     s.add_evil_cluster(evil_cnt)
 
-    s.print_stats()
-
     for step in range(500):
         for node in range(len(s.nodes)):
             s.ping(node)
-    
-    s.print_reputations()
+    s.print_reputations([0, 10, 11])
+
+    print()
+    print("MEASUREMENTS START")
 
     s.reset_stats()
-    for step in range(500):
+    for step in range(1000):
         for node in range(ref_cnt):
             s.ping(node)
     s.print_stats()
+    s.print_reputations([0, 10, 11])
 
 
 def tc3():
@@ -231,13 +232,13 @@ def tc3():
     for step in range(1000):
         if step % 10 == 0:
             s.print_stats()
+            s.reset_stats()
         for node in range(len(s.nodes)):
             s.ping(node)
     
     s.print_reputations(cols=[4, 5])
     s.print_stats()
-
     
 
 if __name__ == "__main__":
-    tc3()
+    tc2()
