@@ -2,6 +2,7 @@ package reputation
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 	"sync"
@@ -75,6 +76,22 @@ type ReputationManager struct {
 	Nodes map[string]Node
 
 	mutex sync.RWMutex
+}
+
+// debug output function
+func (rm *ReputationManager) PrintSimpleRep() string {
+	res := ""
+	rm.mutex.Lock()
+	first := true
+	for _, node := range rm.Nodes {
+		if !first {
+			res += ","
+		}
+		first = false
+		res += fmt.Sprintf("%s: %d %d", node.address, node.reputationGood-node.reputationBad, node.credibilityGood-node.credibilityBad)
+	}
+	rm.mutex.Unlock()
+	return res
 }
 
 func (rm *ReputationManager) InitNodes(addrs []string) {

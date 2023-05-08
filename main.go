@@ -54,6 +54,10 @@ func main() {
 			log.Printf("Bad input: no host provided")
 			continue
 		}
+		if host == "r" { // debug output
+			fmt.Println(reputationManager.PrintSimpleRep())
+			continue
+		}
 
 		pingerClient.GetStatus(host)
 	}
