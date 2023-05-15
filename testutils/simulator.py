@@ -61,26 +61,32 @@ class NetworkSimulator:
     
         probes = {}
         for rec in random.sample(recommenders, min(len(recommenders), NetworkSimulator.rec_cnt)):
-            ratings = self.nodes[rec].ratings
-            self.nodes[rec].ratings.setdefault(node_ind, [0, 0, 0, 0])
-            for probe in ratings:
-                rating = ratings[probe]
+            rec_ratings = self.nodes[rec].ratings
+            rec_ratings.setdefault(node_ind, [0, 0, 0, 0])
+            for probe in rec_ratings:
                 if (probe == node_ind):
                     continue
+                node.ratings.setdefault(probe, [0, 0, 0, 0])
+
                 probes.setdefault(probe, {"good": False, "recs":[]})
+
+                rating = rec_ratings[probe]
                 if rating[0]-rating[1] >= NetworkSimulator.probe_thresh:
                     probes[probe]["good"] = True
                     probes[probe]["recs"].append((rec, False)) # not quarantined
                 else:
                     probes[probe]["recs"].append((rec, True)) # quarantined
         for rec in random.sample(q_recommenders, min(len(q_recommenders), NetworkSimulator.q_rec_cnt)):
-            ratings = self.nodes[rec].ratings
+            rec_ratings = self.nodes[rec].ratings
             self.nodes[rec].ratings.setdefault(node_ind, [0, 0, 0, 0])
-            for probe in ratings:
-                rating = ratings[probe]
+            for probe in rec_ratings:
                 if (probe == node_ind):
                     continue
+                node.ratings.setdefault(probe, [0, 0, 0, 0])
+
                 probes.setdefault(probe, {"good": False, "recs":[]})
+
+                rating = rec_ratings[probe]
                 if rating[0]-rating[1] >= NetworkSimulator.probe_thresh:
                     probes[probe]["recs"].append((rec, False)) # not quarantined
                 else:

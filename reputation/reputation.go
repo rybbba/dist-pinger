@@ -219,6 +219,10 @@ func (rm *ReputationManager) GetProbes(sender string, pickProbes int) []Probe {
 				if probeMsg.GetAddress() == sender {
 					continue
 				}
+				if _, ok := rm.Nodes[probeMsg.GetAddress()]; !ok {
+					rm.Nodes[probeMsg.GetAddress()] = nodeInit(probeMsg.GetAddress())
+				}
+
 				probe := Node{address: probeMsg.GetAddress(), reputationGood: int(probeMsg.GetReputationGood()), reputationBad: int(probeMsg.ReputationBad)}
 				node, ok := probesMap[probe.address]
 				if !ok {
