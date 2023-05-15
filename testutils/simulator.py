@@ -161,6 +161,23 @@ class NetworkSimulator:
             pretty_reps.add_row([i] + [reps[i][j] for j in cols])
         
         print(pretty_reps)
+
+    def get_unlinked(self, reps=None):
+        if reps is None:
+            reps = [0]*len(self.nodes)
+            for i in range(len(self.nodes)):
+                reps[i] = [None]*len(self.nodes)
+                for node in self.nodes[i].ratings:
+                    reps[i][node] = self.nodes[i].ratings[node]
+
+        unlinked = 0
+        for i in range(len(self.nodes)):
+            for j in range(len(self.nodes)):
+                if (i == j):
+                    continue
+                if reps[i][j] is None:
+                    unlinked += 1
+        return unlinked
     
     def print_stats(self):
         reps = [0]*len(self.nodes)
@@ -169,13 +186,7 @@ class NetworkSimulator:
             for node in self.nodes[i].ratings:
                 reps[i][node] = self.nodes[i].ratings[node]
         
-        unlinked = 0
-        for i in range(len(self.nodes)):
-            for j in range(len(self.nodes)):
-                if (i == j):
-                    continue
-                if reps[i][j] is None:
-                    unlinked += 1
+        unlinked = self.get_unlinked(reps)
         
         self.stat_prints_cnt += 1
         print(f"Stat {self.stat_prints_cnt}")
