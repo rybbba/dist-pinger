@@ -62,7 +62,6 @@ func ParseUser(id string) (PublicUser, error) {
 	if matched == nil {
 		return PublicUser{}, errUserParseIdFormat
 	}
-	fmt.Println(matched)
 	address := matched[1]
 	pubString := matched[2]
 	signatureString := matched[3]
