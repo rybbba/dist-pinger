@@ -8,7 +8,7 @@ message GetReputationsRequest {
 }
 
 message Probe {
-    string address = 1;
+    string id = 1;
     
     int32 reputationGood = 2;
     int32 reputationBad = 3;
@@ -18,7 +18,7 @@ message Probe {
 }
 
 message GetReputationsResponse {
-    // string sender = 1;
+    string sender = 1;
     repeated Probe probes = 2;
 }
 

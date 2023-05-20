@@ -18,6 +18,7 @@ var (
 
 type PrivateUser struct {
 	Id         string
+	Address    string
 	privateKey *rsa.PrivateKey
 }
 
@@ -49,7 +50,7 @@ func GenUser(address string) (PrivateUser, error) {
 
 	fullId := fmt.Sprintf("%s#%s", unsignedId, base64.StdEncoding.EncodeToString(signature))
 
-	return PrivateUser{Id: fullId, privateKey: privateKey}, nil
+	return PrivateUser{Id: fullId, Address: address, privateKey: privateKey}, nil
 }
 
 var (

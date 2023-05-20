@@ -6,6 +6,7 @@ import (
 	"time"
 
 	pb "github.com/rybbba/dist-pinger/grpc"
+	"github.com/rybbba/dist-pinger/identity"
 	"github.com/rybbba/dist-pinger/reputation"
 
 	"google.golang.org/grpc"
@@ -22,16 +23,16 @@ type Node struct {
 
 type PingerClient struct {
 	RepManager *reputation.ReputationManager
-	id         string
+	user       identity.PrivateUser
 }
 
-func (pingerClient *PingerClient) SetId(id string) {
-	pingerClient.id = id
+func (pingerClient *PingerClient) SetUser(user identity.PrivateUser) {
+	pingerClient.user = user
 }
 
 func (pingerClient *PingerClient) GetStatus(host string) {
 	// TODO: At this moment we get exactly pickProbes probes and if some of them don't answer we have fewer probes to vote
-	probes := pingerClient.RepManager.GetProbes(pingerClient.id, pickProbes) // reputable and quarantined probes
+	probes := pingerClient.RepManager.GetProbes(pingerClient.user, pickProbes) // reputable and quarantined probes
 
 	results := make([]int32, 0, len(probes))
 	resultsToPrint := make([]int32, 0)
@@ -40,12 +41,12 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 	var bestAns int32 = 0
 	for _, probe := range probes {
 		if probe.Reputable {
-			log.Printf("Using probe: %v", probe.Address)
+			log.Printf("Using probe: %v", probe.User.Address)
 		} else {
-			log.Printf("Using quarantined probe: %v", probe.Address)
+			log.Printf("Using quarantined probe: %v", probe.User.Address)
 		}
 
-		conn, err := grpc.Dial(probe.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(probe.User.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("did not connect: %v", err)
 		}
@@ -54,7 +55,7 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		r, err := c.CheckHost(ctx, &pb.CheckHostRequest{Host: host, Sender: pingerClient.id}) // TODO: The whole id thing is a big crutch right now that should be removed
+		r, err := c.CheckHost(ctx, &pb.CheckHostRequest{Host: host, Sender: pingerClient.user.Id})
 		var code int32
 		if err != nil {
 			log.Printf("error during probe request: %v", err)
@@ -74,19 +75,21 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 		}
 	}
 
-	satisfied := make([]int, 0, len(results))
-	for _, code := range results {
-		if code == bestAns {
-			satisfied = append(satisfied, 1)
-		} else {
-			satisfied = append(satisfied, -1)
+	if bestAns != 0 { // At the moment 0 means that some kind of problem was encountered during ping process, we don't want to rate nodes if most of them are faulty
+		satisfied := make([]int, 0, len(results))
+		for _, code := range results {
+			if code == bestAns {
+				satisfied = append(satisfied, 1)
+			} else {
+				satisfied = append(satisfied, -1)
+			}
 		}
+
+		pingerClient.RepManager.EvaluateVotes(probes, satisfied) // usage of append inside EvaluateVotes ruins probes[0]
 	}
 
-	pingerClient.RepManager.EvaluateVotes(probes, satisfied) // append ruins probes[0]
-
 	for _, probe := range probes {
-		log.Print(pingerClient.RepManager.Nodes[probe.Address])
+		log.Print(pingerClient.RepManager.Nodes[probe.User.Id])
 	}
 
 	log.Printf("Check result for host %s: %v", host, resultsToPrint) // only print results by reputable probes
