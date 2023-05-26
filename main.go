@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 
 	"github.com/rybbba/dist-pinger/client"
 	"github.com/rybbba/dist-pinger/identity"
@@ -14,6 +15,7 @@ import (
 
 var (
 	address = flag.String("address", "", "The address (host:port) on which this node will be available for external users")
+	keyFile = flag.String("key", "id_rsa", "Path to file with private key")
 	//nodeFile = flag.String("file", "nodes.json", "Path to file with nodes information")
 
 	referer = flag.String("ref", "", "Node address to copy initializing ratings from")
@@ -26,11 +28,27 @@ func main() {
 	flag.Parse()
 	ids := flag.Args() // list of nodes IDs
 
-	// TODO: add functionality to pass existing keys to program
-	selfUser, err := identity.GenUser(*address)
+	key, err := identity.ReadKey(*keyFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("No private key was provided, generating a new one.")
+		} else {
+			log.Fatalf("cannot read key file: %v", err)
+		}
+	}
+
+	selfUser, err := identity.GenUser(*address, key)
 	if err != nil {
 		log.Fatalf("cannot initialize user keys: %v", err)
 	}
+
+	if key == nil { // If there was no key file, we will create it and write our generated key
+		err := identity.WriteUserKey(selfUser, *keyFile)
+		if err != nil {
+			log.Fatalf("cannot write new key: %v", err)
+		}
+	}
+
 	id := selfUser.Id
 	log.Printf("Your ID: %s", id)
 

@@ -6,8 +6,11 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"regexp"
 )
 
@@ -28,16 +31,57 @@ type PublicUser struct {
 	publicKey *rsa.PublicKey
 }
 
-func GenUser(address string) (PrivateUser, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, keySize)
+func WriteUserKey(user PrivateUser, path string) error {
+	fi, err := os.Create(path)
 	if err != nil {
-		return PrivateUser{}, err
+		return err
+	}
+	err = pem.Encode(fi,
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: x509.MarshalPKCS1PrivateKey(user.privateKey),
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	err = fi.Close()
+	if err != nil {
+		log.Printf("Error closing output file: %v", err)
+	}
+	return nil
+}
+
+func ReadKey(path string) (*rsa.PrivateKey, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, errors.New("File contains no key")
+	}
+
+	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return key, nil
+}
+
+// Generates user with specified address and private key. If no private key was provided generates a new one.
+func GenUser(address string, privateKey *rsa.PrivateKey) (PrivateUser, error) {
+	if privateKey == nil {
+		var err error
+		privateKey, err = rsa.GenerateKey(rand.Reader, keySize)
+		if err != nil {
+			return PrivateUser{}, err
+		}
 	}
 
 	pubString := base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PublicKey(&privateKey.PublicKey))
-	if err != nil {
-		return PrivateUser{}, err
-	}
 
 	unsignedId := fmt.Sprintf("%s@%s", address, pubString)
 
