@@ -23,33 +23,41 @@ var (
 	port = flag.Int("port", 50051, "The server port")
 )
 
+func initUser() identity.PrivateUser {
+	readUser, err := identity.ReadUser(*userFile)
+	if err == nil { // no errors
+		log.Printf("User configuration read from %s", *userFile)
+		return readUser
+	}
+	if !os.IsNotExist(err) {
+		log.Fatalf("cannot read user file: %v", err)
+	}
+
+	log.Printf("Generating new user.")
+	genUser, err := identity.GenUser(*address)
+	if err != nil {
+		log.Fatalf("cannot initialize user keys: %v", err)
+	}
+
+	if *userFile == "" {
+		log.Printf("Empty user file path, configuration not saved.")
+		return genUser
+	}
+
+	err = identity.WriteUser(genUser, *userFile)
+	if err != nil {
+		log.Fatalf("cannot write to user file: %v", err)
+	}
+	log.Printf("User configuration saved to %s.", *userFile)
+	return genUser
+}
+
 func main() {
 	log.Printf("Running dist-pinger")
 	flag.Parse()
-	ids := flag.Args() // list of nodes IDs
+	ids := flag.Args() // list of nodes' IDs
 
-	newUser := false
-	selfUser, err := identity.ReadUser(*userFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			newUser = true
-			log.Printf("No user file was provided, generating a new one.")
-		} else {
-			log.Fatalf("cannot read user file: %v", err)
-		}
-	}
-
-	if newUser {
-		selfUser, err = identity.GenUser(*address)
-		if err != nil {
-			log.Fatalf("cannot initialize user keys: %v", err)
-		}
-
-		err := identity.WriteUser(selfUser, *userFile)
-		if err != nil {
-			log.Fatalf("cannot write user file: %v", err)
-		}
-	}
+	selfUser := initUser()
 
 	id := selfUser.Id
 	log.Printf("Your ID: %s", id)
