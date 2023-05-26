@@ -158,7 +158,7 @@ func (rm *ReputationManager) CopyReputation(sender identity.PrivateUser, target 
 		rm.mutex.Unlock()
 	}
 	rm.Nodes[target.Id] = nodeInitRef(target)
-	log.Printf("Copied reputations: %v", rm.Nodes)
+	// log.Printf("Copied reputations: %v", rm.Nodes)
 	return nil
 }
 

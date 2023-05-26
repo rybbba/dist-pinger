@@ -58,6 +58,7 @@ func main() {
 	ids := flag.Args() // list of nodes' IDs
 
 	selfUser := initUser()
+	// TODO: add fool-proof user validation
 
 	id := selfUser.Id
 	log.Printf("Your ID: %s", id)
