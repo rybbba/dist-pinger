@@ -6,8 +6,11 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"regexp"
 )
 
@@ -18,6 +21,7 @@ var (
 
 type PrivateUser struct {
 	Id         string
+	Address    string
 	privateKey *rsa.PrivateKey
 }
 
@@ -27,6 +31,54 @@ type PublicUser struct {
 	publicKey *rsa.PublicKey
 }
 
+type privateUserFile struct {
+	Id         string `json:"id"`
+	Address    string `json:"address"`
+	PrivateKey []byte `json:"privatekey"`
+}
+
+func WriteUser(user PrivateUser, path string) error {
+	fi, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	data, err := json.Marshal(privateUserFile{Id: user.Id, Address: user.Address, PrivateKey: x509.MarshalPKCS1PrivateKey(user.privateKey)})
+	if err != nil {
+		return err
+	}
+	_, err = fi.Write(data)
+	if err != nil {
+		return err
+	}
+
+	err = fi.Close()
+	if err != nil {
+		log.Printf("Error closing output file: %v", err)
+	}
+	return nil
+}
+
+func ReadUser(path string) (PrivateUser, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return PrivateUser{}, err
+	}
+	var userFile privateUserFile
+	err = json.Unmarshal(data, &userFile)
+	if err != nil {
+		return PrivateUser{}, err
+	}
+
+	key, err := x509.ParsePKCS1PrivateKey(userFile.PrivateKey)
+	if err != nil {
+		return PrivateUser{}, err
+	}
+
+	return PrivateUser{Id: userFile.Id, Address: userFile.Address, privateKey: key}, nil
+}
+
+// Generates user with specified address and private key. If no private key was provided generates a new one.
 func GenUser(address string) (PrivateUser, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, keySize)
 	if err != nil {
@@ -34,9 +86,6 @@ func GenUser(address string) (PrivateUser, error) {
 	}
 
 	pubString := base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PublicKey(&privateKey.PublicKey))
-	if err != nil {
-		return PrivateUser{}, err
-	}
 
 	unsignedId := fmt.Sprintf("%s@%s", address, pubString)
 
@@ -49,7 +98,7 @@ func GenUser(address string) (PrivateUser, error) {
 
 	fullId := fmt.Sprintf("%s#%s", unsignedId, base64.StdEncoding.EncodeToString(signature))
 
-	return PrivateUser{Id: fullId, privateKey: privateKey}, nil
+	return PrivateUser{Id: fullId, Address: address, privateKey: privateKey}, nil
 }
 
 var (
