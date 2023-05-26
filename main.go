@@ -20,7 +20,7 @@ var (
 
 	referer = flag.String("ref", "", "Node address to copy initializing ratings from")
 
-	port = flag.Int("port", 50051, "The server port")
+	port = flag.Int("port", 5051, "The server port")
 )
 
 func initUser() identity.PrivateUser {
