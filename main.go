@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	address = flag.String("address", "", "The address (host:port) on which this node will be available for external users")
-	keyFile = flag.String("key", "id_rsa", "Path to file with private key")
+	address  = flag.String("address", "", "The address (host:port) on which this node will be available for external users")
+	userFile = flag.String("userfile", "user.json", "Path to file with user data")
 	//nodeFile = flag.String("file", "nodes.json", "Path to file with nodes information")
 
 	referer = flag.String("ref", "", "Node address to copy initializing ratings from")
@@ -28,24 +28,26 @@ func main() {
 	flag.Parse()
 	ids := flag.Args() // list of nodes IDs
 
-	key, err := identity.ReadKey(*keyFile)
+	newUser := false
+	selfUser, err := identity.ReadUser(*userFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Printf("No private key was provided, generating a new one.")
+			newUser = true
+			log.Printf("No user file was provided, generating a new one.")
 		} else {
-			log.Fatalf("cannot read key file: %v", err)
+			log.Fatalf("cannot read user file: %v", err)
 		}
 	}
 
-	selfUser, err := identity.GenUser(*address, key)
-	if err != nil {
-		log.Fatalf("cannot initialize user keys: %v", err)
-	}
-
-	if key == nil { // If there was no key file, we will create it and write our generated key
-		err := identity.WriteUserKey(selfUser, *keyFile)
+	if newUser {
+		selfUser, err = identity.GenUser(*address)
 		if err != nil {
-			log.Fatalf("cannot write new key: %v", err)
+			log.Fatalf("cannot initialize user keys: %v", err)
+		}
+
+		err := identity.WriteUser(selfUser, *userFile)
+		if err != nil {
+			log.Fatalf("cannot write user file: %v", err)
 		}
 	}
 

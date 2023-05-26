@@ -6,7 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -31,17 +31,23 @@ type PublicUser struct {
 	publicKey *rsa.PublicKey
 }
 
-func WriteUserKey(user PrivateUser, path string) error {
+type privateUserFile struct {
+	Id         string `json:"id"`
+	Address    string `json:"address"`
+	PrivateKey []byte `json:"privatekey"`
+}
+
+func WriteUser(user PrivateUser, path string) error {
 	fi, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	err = pem.Encode(fi,
-		&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(user.privateKey),
-		},
-	)
+
+	data, err := json.Marshal(privateUserFile{Id: user.Id, Address: user.Address, PrivateKey: x509.MarshalPKCS1PrivateKey(user.privateKey)})
+	if err != nil {
+		return err
+	}
+	_, err = fi.Write(data)
 	if err != nil {
 		return err
 	}
@@ -53,32 +59,30 @@ func WriteUserKey(user PrivateUser, path string) error {
 	return nil
 }
 
-func ReadKey(path string) (*rsa.PrivateKey, error) {
+func ReadUser(path string) (PrivateUser, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return PrivateUser{}, err
 	}
-	block, _ := pem.Decode(data)
-	if block == nil {
-		return nil, errors.New("File contains no key")
-	}
-
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	var userFile privateUserFile
+	err = json.Unmarshal(data, &userFile)
 	if err != nil {
-		return nil, err
+		return PrivateUser{}, err
 	}
 
-	return key, nil
+	key, err := x509.ParsePKCS1PrivateKey(userFile.PrivateKey)
+	if err != nil {
+		return PrivateUser{}, err
+	}
+
+	return PrivateUser{Id: userFile.Id, Address: userFile.Address, privateKey: key}, nil
 }
 
 // Generates user with specified address and private key. If no private key was provided generates a new one.
-func GenUser(address string, privateKey *rsa.PrivateKey) (PrivateUser, error) {
-	if privateKey == nil {
-		var err error
-		privateKey, err = rsa.GenerateKey(rand.Reader, keySize)
-		if err != nil {
-			return PrivateUser{}, err
-		}
+func GenUser(address string) (PrivateUser, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, keySize)
+	if err != nil {
+		return PrivateUser{}, err
 	}
 
 	pubString := base64.StdEncoding.EncodeToString(x509.MarshalPKCS1PublicKey(&privateKey.PublicKey))
