@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
-	"log" // TODO: remove log from server code
+	"log"
 	"net"
 	"net/http"
 

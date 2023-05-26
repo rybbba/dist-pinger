@@ -18,7 +18,6 @@ import (
 var (
 	pickRecommenders = 2
 
-	// what rating formula will we use?
 	reputationThreshold  = 2
 	credibilityThreshold = 2
 
@@ -290,6 +289,7 @@ func (rm *ReputationManager) GetProbes(sender identity.PrivateUser, pickProbes i
 
 // Takes an array of probes returned by GetServers and an array of our satisfaction from corresponding probes' work
 // Negative satisfaction means that probe's answer was bad, positive that it was good and zero means that we don't want to rate it
+// All passed probes already have a record in rm.Nodes
 func (rm *ReputationManager) EvaluateVotes(probes []Probe, satisfaction []int) {
 	for i, probe := range probes {
 		if satisfaction[i] > 0 {

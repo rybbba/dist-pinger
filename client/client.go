@@ -32,7 +32,7 @@ func (pingerClient *PingerClient) SetUser(user identity.PrivateUser) {
 
 func (pingerClient *PingerClient) GetStatus(host string) {
 	// TODO: At this moment we get exactly pickProbes probes and if some of them don't answer we have fewer probes to vote
-	probes := pingerClient.RepManager.GetProbes(pingerClient.user, pickProbes) // reputable and quarantined probes
+	probes := pingerClient.RepManager.GetProbes(pingerClient.user, pickProbes)
 
 	results := make([]int32, 0, len(probes))
 	resultsToPrint := make([]int32, 0)
@@ -85,7 +85,7 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 			}
 		}
 
-		pingerClient.RepManager.EvaluateVotes(probes, satisfied) // usage of append inside EvaluateVotes ruins probes[0]
+		pingerClient.RepManager.EvaluateVotes(probes, satisfied) // usage of append inside EvaluateVotes will ruin probes[0]
 	}
 
 	for _, probe := range probes {
@@ -95,5 +95,4 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 	log.Printf("Check result for host %s: %v", host, resultsToPrint) // only print results by reputable probes
 	log.Printf("Aggregated results: %v", aggResults)
 	log.Printf("Resource status: %d", bestAns)
-	// TODO: Deal with multiple "right" answers (geo-specific access restriction, etc.)
 }
