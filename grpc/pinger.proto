@@ -3,12 +3,17 @@ syntax = "proto3";
 option go_package = "github.com/rybbba/dist-pinger/grpc";
 
 message CheckHostRequest {
-    string host = 1;
-    string sender = 2;
+    string sender = 1;
+    bytes signature = 2;
+
+    string host = 3;
 }
 
 message CheckHostResponse {
-    int32 code = 1;
+    string sender = 1;
+    bytes signature = 2;
+
+    int32 code = 3;
 }
 
 service Pinger {

@@ -4,7 +4,9 @@ option go_package = "github.com/rybbba/dist-pinger/grpc";
 
 message GetReputationsRequest {
     string sender = 1;
-    bool needCredibilities = 2;
+    bytes signature = 2;
+    
+    bool needCredibilities = 3;
 }
 
 message Probe {
@@ -19,7 +21,9 @@ message Probe {
 
 message GetReputationsResponse {
     string sender = 1;
-    repeated Probe probes = 2;
+    bytes signature = 2;
+
+    repeated Probe probes = 3;
 }
 
 service Reputation {
