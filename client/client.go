@@ -48,14 +48,23 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 
 		conn, err := grpc.Dial(probe.User.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Fatalf("did not connect: %v", err)
+			log.Printf("Cannot not connect: %v", err)
+			continue
 		}
 		defer conn.Close()
 		c := pb.NewPingerClient(conn)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		r, err := c.CheckHost(ctx, &pb.CheckHostRequest{Host: host, Sender: pingerClient.user.Id})
+
+		message := pb.CheckHostRequest{Host: host, Sender: pingerClient.user.Id}
+		signature, err := identity.SignProto(pingerClient.user, &message)
+		if err != nil {
+			log.Fatalf("cannot sign message: %v", err)
+		}
+		message.Signature = signature
+
+		r, err := c.CheckHost(ctx, &message)
 		var code int32
 		if err != nil {
 			log.Printf("error during probe request: %v", err)

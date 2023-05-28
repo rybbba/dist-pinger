@@ -37,6 +37,12 @@ func (s *PingerServer) GetReputations(ctx context.Context, in *pb.GetReputations
 	if err != nil {
 		return &pb.GetReputationsResponse{}, err
 	}
+	signature := in.Signature
+	in.Signature = nil
+	err = identity.VerifyProto(senderUser, in, signature)
+	if err != nil {
+		return &pb.GetReputationsResponse{}, err
+	}
 
 	needCredibilities := in.GetNeedCredibilities()
 
@@ -45,7 +51,13 @@ func (s *PingerServer) GetReputations(ctx context.Context, in *pb.GetReputations
 
 func (s *PingerServer) CheckHost(ctx context.Context, in *pb.CheckHostRequest) (*pb.CheckHostResponse, error) {
 	sender := in.GetSender()
-	_, err := identity.ParseUser(sender)
+	senderUser, err := identity.ParseUser(sender)
+	if err != nil {
+		return &pb.CheckHostResponse{}, err
+	}
+	signature := in.Signature
+	in.Signature = nil
+	err = identity.VerifyProto(senderUser, in, signature)
 	if err != nil {
 		return &pb.CheckHostResponse{}, err
 	}

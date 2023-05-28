@@ -136,7 +136,14 @@ func (rm *ReputationManager) CopyReputation(sender identity.PrivateUser, target 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	r, err := c.GetReputations(ctx, &pb.GetReputationsRequest{Sender: sender.Id, NeedCredibilities: true})
+	message := pb.GetReputationsRequest{Sender: sender.Id, NeedCredibilities: true}
+	signature, err := identity.SignProto(sender, &message)
+	if err != nil {
+		log.Fatalf("cannot sign message: %v", err)
+	}
+	message.Signature = signature
+
+	r, err := c.GetReputations(ctx, &message)
 	if err != nil {
 		return err
 	}
@@ -211,7 +218,14 @@ func (rm *ReputationManager) GetProbes(sender identity.PrivateUser, pickProbes i
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 
-			r, err := c.GetReputations(ctx, &pb.GetReputationsRequest{Sender: sender.Id})
+			message := pb.GetReputationsRequest{Sender: sender.Id}
+			signature, err := identity.SignProto(sender, &message)
+			if err != nil {
+				log.Fatalf("cannot sign message: %v", err)
+			}
+			message.Signature = signature
+
+			r, err := c.GetReputations(ctx, &message)
 			if err != nil {
 				log.Printf("error during recommender request to %s: %v", recommender.user.Address, err)
 				// if the request to a credible recommender fails we want to find another one to not lose the voting process quality

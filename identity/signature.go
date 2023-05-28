@@ -4,6 +4,8 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -24,10 +26,18 @@ func verify(publicKey *rsa.PublicKey, message []byte, signature []byte) error {
 	return err
 }
 
-func SignMessage(user PrivateUser, message []byte) ([]byte, error) {
-	return sign(user.privateKey, message)
+func SignProto(user PrivateUser, message proto.Message) ([]byte, error) {
+	serialized, err := proto.Marshal(message)
+	if err != nil {
+		return nil, err
+	}
+	return sign(user.privateKey, serialized)
 }
 
-func VerifyMessage(user PublicUser, message []byte, signature []byte) error {
-	return verify(user.publicKey, message, signature)
+func VerifyProto(user PublicUser, message proto.Message, signature []byte) error {
+	serialized, err := proto.Marshal(message)
+	if err != nil {
+		return err
+	}
+	return verify(user.publicKey, serialized, signature)
 }
