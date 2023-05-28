@@ -1,7 +1,6 @@
 package identity
 
 import (
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -15,8 +14,7 @@ import (
 )
 
 var (
-	keySize = 512
-	hash    = crypto.SHA256
+	userKeySize = 512
 )
 
 type PrivateUser struct {
@@ -80,7 +78,7 @@ func ReadUser(path string) (PrivateUser, error) {
 
 // Generates user with specified address and private key. If no private key was provided generates a new one.
 func GenUser(address string) (PrivateUser, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, keySize)
+	privateKey, err := rsa.GenerateKey(rand.Reader, userKeySize)
 	if err != nil {
 		return PrivateUser{}, err
 	}
@@ -89,9 +87,7 @@ func GenUser(address string) (PrivateUser, error) {
 
 	unsignedId := fmt.Sprintf("%s@%s", address, pubString)
 
-	hasher := hash.New()
-	hasher.Write([]byte(unsignedId))
-	signature, err := rsa.SignPSS(rand.Reader, privateKey, hash, hasher.Sum(nil), nil)
+	signature, err := sign(privateKey, []byte(unsignedId))
 	if err != nil {
 		return PrivateUser{}, err
 	}
@@ -131,9 +127,7 @@ func ParseUser(id string) (PublicUser, error) {
 	}
 
 	unsignedId := fmt.Sprintf("%s@%s", address, pubString)
-	hasher := hash.New()
-	hasher.Write([]byte(unsignedId))
-	err = rsa.VerifyPSS(publicKey, hash, hasher.Sum(nil), signature, nil)
+	err = verify(publicKey, []byte(unsignedId), signature)
 	if err != nil {
 		return PublicUser{}, err
 	}
