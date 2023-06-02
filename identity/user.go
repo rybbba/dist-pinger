@@ -76,7 +76,6 @@ func ReadUser(path string) (PrivateUser, error) {
 	return PrivateUser{Id: userFile.Id, Address: userFile.Address, privateKey: key}, nil
 }
 
-// Generates user with specified address and private key. If no private key was provided generates a new one.
 func GenUser(address string) (PrivateUser, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, userKeySize)
 	if err != nil {
