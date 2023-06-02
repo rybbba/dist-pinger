@@ -26,4 +26,4 @@ One of the following arguments must also be used to connect to a network:
 - `ref`, an ID of a trustworthy DistPinger member that would be used on start as a source of information about other nodes and an entry point to the network;
 - non-flag arguments, IDs of trustworthy DistPinger users who will be known and trusted by node from the start;
 
-If there is an existing network, users will likely prefer the `ref` method as it allows them to easily join it knowing only ID of one other user. However the second method is required to create a "reference group" in a new DistPinger network.
+If there is an existing network, users will likely prefer the `ref` method as it allows them to easily join the system knowing only an ID of one other user. However the second method is required to create a "reference group" in a new DistPinger network.
