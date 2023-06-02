@@ -7,7 +7,7 @@ Unlike in existing solutions where users interact with a single control server t
 To overcome the problem of malicious users in such an open network, DistPinger also implements a reputation system that mitigates the impact of harmful activity in the system.
 
 ## Build
-To build this project you must setup required [prerequisites](https://grpc.io/docs/languages/go/quickstart/#prerequisites) for the Google protocol buffer compiler to generate Go code and run following command from the root of the repository to generate gRPC bindings:
+To build this project you must setup required [prerequisites](https://grpc.io/docs/languages/go/quickstart/#prerequisites) for the Google protocol buffer compiler to generate Go code and run the following command from the root of the repository to generate gRPC bindings:
 ```bash
 protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative grpc/*.proto
