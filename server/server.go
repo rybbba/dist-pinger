@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 
 	pb "github.com/rybbba/dist-pinger/grpc"
 	"github.com/rybbba/dist-pinger/identity"
@@ -13,17 +12,6 @@ import (
 
 	"google.golang.org/grpc"
 )
-
-func check(host string) (int, error) {
-	// TODO: add host string verification
-
-	resp, err := http.Get(fmt.Sprintf("http://%s", host))
-	if err != nil {
-		return -1, err
-	}
-	defer resp.Body.Close()
-	return resp.StatusCode, nil
-}
 
 type PingerServer struct {
 	RepManager reputation.ReputationManagerInterface
