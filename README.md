@@ -19,11 +19,11 @@ After that the repository can be built as a normal Golang module.
 To start a node, following flags must be specified:
 
 - `address`, external address on which this node will be available for other users;
-- `port`, port on which the probe server will be running
+- `port`, port on which the probe server will be running;
 
 One of the following arguments must also be passed to connect to a network:
 
-- `ref`, an ID of a trustworthy DistPinger member that would be used on start as a source of information about other nodes and an entry point to the network.
-- non-flag arguments, IDs of trustworthy DistPinger users who will be known and trusted by node from the start.
+- `ref`, an ID of a trustworthy DistPinger member that would be used on start as a source of information about other nodes and an entry point to the network;
+- non-flag arguments, IDs of trustworthy DistPinger users who will be known and trusted by node from the start;
 
 If there is an existing network, users will likely prefer the `ref` method as it allows them to easily join it knowing only ID of one other user. However the second method is required to create a "reference group" in a new DistPinger network.
