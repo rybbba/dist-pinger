@@ -18,59 +18,9 @@ import (
 var (
 	pickRecommenders = 2
 
-	reputationThreshold  = 2
-	credibilityThreshold = 2
-
 	pickProbesQuarantine       = 2
 	pickRecommendersQuarantine = 1
 )
-
-type Node struct {
-	user            identity.PublicUser
-	reputationGood  int
-	reputationBad   int
-	credibilityGood int
-	credibilityBad  int
-}
-
-func nodeInit(user identity.PublicUser) Node {
-	return Node{user: user} // all other fields will be zero by default
-}
-
-func nodeInitRef(user identity.PublicUser) Node {
-	node := nodeInit(user)
-	node.reputationGood = 5
-	node.credibilityGood = 5
-	return node
-}
-
-func IsReputable(node Node) bool {
-	return node.reputationGood-node.reputationBad >= reputationThreshold
-}
-
-func RaiseReputation(node Node) Node {
-	node.reputationGood += 1
-	return node
-}
-
-func LowerReputation(node Node) Node {
-	node.reputationBad += 1
-	return node
-}
-
-func IsCredible(node Node) bool {
-	return node.credibilityGood-node.credibilityBad >= credibilityThreshold
-}
-
-func RaiseCredibility(node Node) Node {
-	node.credibilityGood += 1
-	return node
-}
-
-func LowerCredibility(node Node) Node {
-	node.credibilityBad += 1
-	return node
-}
 
 type ReputationManager struct {
 	Nodes map[string]Node
@@ -108,7 +58,7 @@ func pickN(total int, n int) []int {
 // TODO: make sure that following functions will work as intended
 // with an address that is not in the manager's nodes keys
 
-// TODO: I 100% must refactor this
+// TODO: I must refactor this
 func (rm *ReputationManager) GiveProbes(sender identity.PublicUser, withCredibility bool) *pb.GetReputationsResponse {
 	message := &pb.GetReputationsResponse{Probes: make([]*pb.Probe, 0)}
 	for _, node := range rm.Nodes {
@@ -167,18 +117,6 @@ func (rm *ReputationManager) CopyReputation(sender identity.PrivateUser, target 
 	rm.Nodes[target.Id] = nodeInitRef(target)
 	// log.Printf("Copied reputations: %v", rm.Nodes)
 	return nil
-}
-
-type probeRecommender struct {
-	user             identity.PublicUser
-	quarantinedProbe bool
-}
-
-type Probe struct {
-	User      identity.PublicUser
-	Reputable bool
-
-	recommenders []probeRecommender
 }
 
 // Are we sure that we want reputation manager to pick nodes for us? Maybe this should be moved to the client?

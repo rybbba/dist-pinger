@@ -22,7 +22,7 @@ type Node struct {
 }
 
 type PingerClient struct {
-	RepManager *reputation.ReputationManager
+	RepManager reputation.ReputationManagerInterface
 	user       identity.PrivateUser
 }
 
@@ -95,10 +95,6 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 		}
 
 		pingerClient.RepManager.EvaluateVotes(probes, satisfied) // usage of append inside EvaluateVotes will ruin probes[0]
-	}
-
-	for _, probe := range probes {
-		log.Print(pingerClient.RepManager.Nodes[probe.User.Id])
 	}
 
 	log.Printf("Check result for host %s: %v", host, resultsToPrint) // only print results by reputable probes

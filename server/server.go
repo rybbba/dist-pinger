@@ -26,7 +26,7 @@ func check(host string) (int, error) {
 }
 
 type PingerServer struct {
-	RepManager *reputation.ReputationManager
+	RepManager reputation.ReputationManagerInterface
 	pb.UnimplementedPingerServer
 	pb.UnimplementedReputationServer
 }
