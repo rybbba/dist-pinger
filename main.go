@@ -57,6 +57,10 @@ func main() {
 	flag.Parse()
 	ids := flag.Args() // list of nodes' IDs
 
+	if *address == "" {
+		log.Fatalf("No address specified")
+	}
+
 	selfUser := initUser()
 	// TODO: add fool-proof user validation
 

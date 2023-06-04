@@ -6,8 +6,11 @@ from time import sleep
 import threading
 from typing import IO
 
+# OUTDATED
+
 class Node:
     def __init__(self, proc: subprocess.Popen, inp: IO[str], out: IO[str]):
+        raise NotImplementedError("Outdated node wrapping, public key handling is not implemented.")
         self.p = proc
 
         self.input_handler = inp
