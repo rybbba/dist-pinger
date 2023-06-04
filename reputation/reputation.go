@@ -97,6 +97,12 @@ func (rm *ReputationManager) CopyReputation(sender identity.PrivateUser, target 
 	if err != nil {
 		return err
 	}
+	signature = r.Signature
+	r.Signature = nil
+	err = identity.VerifyProto(target, r, signature)
+	if err != nil {
+		return err
+	}
 
 	for _, probeMsg := range r.GetProbes() {
 		if probeMsg.Id == sender.Id {
@@ -164,6 +170,16 @@ func (rm *ReputationManager) GetProbes(sender identity.PrivateUser, pickProbes i
 			message.Signature = signature
 
 			r, err := c.GetReputations(ctx, &message)
+			if err != nil {
+				log.Printf("error during recommender request to %s: %v", recommender.user.Address, err)
+				// if the request to a credible recommender fails we want to find another one to not lose the voting process quality
+				if recType == 0 {
+					cntRec[recType] += 1
+				}
+			}
+			signature = r.Signature
+			r.Signature = nil
+			err = identity.VerifyProto(recommender.user, r, signature)
 			if err != nil {
 				log.Printf("error during recommender request to %s: %v", recommender.user.Address, err)
 				// if the request to a credible recommender fails we want to find another one to not lose the voting process quality

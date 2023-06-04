@@ -70,7 +70,14 @@ func (pingerClient *PingerClient) GetStatus(host string) {
 			log.Printf("error during probe request: %v", err)
 			code = 0
 		} else {
-			code = r.GetCode()
+			signature := r.Signature
+			r.Signature = nil
+			err = identity.VerifyProto(probe.User, r, signature)
+			if err != nil {
+				code = 0
+			} else {
+				code = r.GetCode()
+			}
 		}
 
 		results = append(results, code)

@@ -15,8 +15,13 @@ import (
 
 type PingerServer struct {
 	RepManager reputation.ReputationManagerInterface
+	user       identity.PrivateUser
 	pb.UnimplementedPingerServer
 	pb.UnimplementedReputationServer
+}
+
+func (s *PingerServer) SetUser(user identity.PrivateUser) {
+	s.user = user
 }
 
 func (s *PingerServer) GetReputations(ctx context.Context, in *pb.GetReputationsRequest) (*pb.GetReputationsResponse, error) {
@@ -34,7 +39,13 @@ func (s *PingerServer) GetReputations(ctx context.Context, in *pb.GetReputations
 
 	needCredibilities := in.GetNeedCredibilities()
 
-	return s.RepManager.GiveProbes(senderUser, needCredibilities), nil
+	messageP := s.RepManager.GiveProbes(senderUser, needCredibilities)
+	signature, err = identity.SignProto(s.user, messageP)
+	if err != nil {
+		log.Fatalf("cannot sign message: %v", err)
+	}
+	messageP.Signature = signature
+	return messageP, nil
 }
 
 func (s *PingerServer) CheckHost(ctx context.Context, in *pb.CheckHostRequest) (*pb.CheckHostResponse, error) {
@@ -54,7 +65,14 @@ func (s *PingerServer) CheckHost(ctx context.Context, in *pb.CheckHostRequest) (
 	if err != nil {
 		return &pb.CheckHostResponse{Code: -1}, err // TODO: probably should not return all server-side errors to client
 	}
-	return &pb.CheckHostResponse{Code: int32(res)}, nil
+
+	message := pb.CheckHostResponse{Code: int32(res)}
+	signature, err = identity.SignProto(s.user, &message)
+	if err != nil {
+		log.Fatalf("cannot sign message: %v", err)
+	}
+	message.Signature = signature
+	return &message, nil
 }
 
 func (pingerServer *PingerServer) Serve(port int) {

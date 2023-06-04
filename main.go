@@ -86,6 +86,7 @@ func main() {
 	}
 
 	pingerServer := server.PingerServer{RepManager: &reputationManager}
+	pingerServer.SetUser(selfUser)
 	go pingerServer.Serve(*port)
 
 	pingerClient := client.PingerClient{RepManager: &reputationManager}
