@@ -15,7 +15,7 @@ protoc --go_out=. --go_opt=paths=source_relative \
 
 After that the repository can be built as a normal Golang module. 
 
-## Run
+## Usage
 To start a node, the following flags must be specified:
 
 - `address`, external address on which this node will be available for other users;
@@ -27,3 +27,5 @@ One of the following type of arguments should also be used to connect to a netwo
 - non-flag arguments, IDs of trustworthy DistPinger users who will be known and trusted by node from the start;
 
 If there is an existing network, users will likely prefer the `ref` method as it allows them to easily join the system knowing only an ID of one other user. However the second method is required to create a "reference group" in a new DistPinger network.
+
+> After connecting to a network you just need to enter the address of a web service you want to check to perform an availability test.
